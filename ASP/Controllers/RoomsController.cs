@@ -6,7 +6,7 @@ namespace ASP.Controllers;
 [ApiController]
 public class RoomsController : ControllerBase
 {
-    private static List<Room> rooms = new List<Room>()
+    public static List<Room> _rooms = new List<Room>()
     {
         new Room(1, "A101", "A", 1, 20, true, true),
         new Room(2, "A102", "A", 1, 15, false, true),
@@ -15,19 +15,11 @@ public class RoomsController : ControllerBase
         new Room(5, "D401", "D", 4, 40, false, true)
     };
 
-    // GET api/rooms
-    [HttpGet]
-    public ActionResult<IEnumerable<Room>> GetAll()
-    {
-        return Ok(rooms);
-    }
-
     // GET api/rooms/{id}
-    [Route("{id}")]
-    [HttpGet]
+    [HttpGet("{id}")]
     public ActionResult<Room> Get(int id)
     {
-        var room = rooms.FirstOrDefault(r => r.Id == id);
+        var room = _rooms.FirstOrDefault(r => r.Id == id);
         if (room == null)
             return NotFound();
 
@@ -38,7 +30,7 @@ public class RoomsController : ControllerBase
     [HttpGet("building/{buildingCode}")]
     public ActionResult<IEnumerable<Room>> GetByBuilding(string buildingCode)
     {
-        var result = rooms
+        var result = _rooms
             .Where(r => r.BuildingCode.ToLower() == buildingCode.ToLower())
             .ToList();
 
@@ -52,7 +44,7 @@ public class RoomsController : ControllerBase
         [FromQuery] bool? hasProjector,
         [FromQuery] bool? activeOnly)
     {
-        var query = rooms.AsQueryable();
+        var query = _rooms.AsQueryable();
 
         if (minCapacity.HasValue)
             query = query.Where(r => r.Capacity >= minCapacity.Value);
@@ -70,17 +62,28 @@ public class RoomsController : ControllerBase
     [HttpPost]
     public ActionResult<Room> Create(Room newRoom)
     {
-        newRoom.Id = rooms.Max(r => r.Id) + 1;
-        rooms.Add(newRoom);
+        var exists = _rooms.Any(r =>
+            r.Name == newRoom.Name &&
+            r.BuildingCode == newRoom.BuildingCode
+        );
 
-        return CreatedAtAction(nameof(GetById), new { id = newRoom.Id }, newRoom);
+        if (exists)
+            return Conflict("Room already exists in this building");
+
+        newRoom.Id = _rooms.Any()
+            ? _rooms.Max(r => r.Id) + 1
+            : 1;
+
+        _rooms.Add(newRoom);
+
+        return CreatedAtAction(nameof(Get), new { id = newRoom.Id }, newRoom);
     }
 
     // PUT /api/rooms/{id}
     [HttpPut("{id}")]
     public IActionResult Update(int id, Room updatedRoom)
     {
-        var room = rooms.FirstOrDefault(r => r.Id == id);
+        var room = _rooms.FirstOrDefault(r => r.Id == id);
         if (room == null)
             return NotFound();
 
@@ -98,11 +101,10 @@ public class RoomsController : ControllerBase
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {
-        var room = rooms.FirstOrDefault(r => r.Id == id);
+        var room = _rooms.FirstOrDefault(r => r.Id == id);
         if (room == null)
             return NotFound();
-
-        rooms.Remove(room);
+        _rooms.Remove(room);
         return NoContent();
     }
 }

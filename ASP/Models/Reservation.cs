@@ -1,17 +1,20 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ASP.Models;
 
 public class Reservation
 {
     public int Id { get; set; }
     public int RoomId { get; set; }
+    [Required]
     public string OrganizerName { get; set; }
+    [Required]
     public string Topic { get; set; }
-    public string Date { get; set; }
-    public string StartTime { get; set; }
-    public string EndTime { get; set; }
+    public DateTime Date { get; set; }
+    public TimeSpan StartTime { get; set; }
+    public TimeSpan EndTime { get; set; }
     public string Status { get; set; }
-
-    public Reservation(int Id, int RoomId, string OrganizerName, string Topic, string Date, string StartTime, string EndTime, string Status)
+    public Reservation(int Id, int RoomId, string OrganizerName, string Topic, DateTime Date, TimeSpan StartTime, TimeSpan EndTime, string Status)
     {
         this.Id = Id;
         this.RoomId = RoomId;
